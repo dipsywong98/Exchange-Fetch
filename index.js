@@ -17,6 +17,7 @@ var moment = require('moment');
 var $;
 var countries=[];
 var institudes=[];
+columns=[];
 
 var root = 'http://arr.ust.hk/ust_actoe/';
 
@@ -82,4 +83,39 @@ function FetchInstitudes(i=0){
     });
 }
 
-FetchCountries();
+function GetCountriesAndInstutudesJSON(){
+    request('http://localhost/usthing/exchange/countries_and_institudes.json', function (error, response, body) {
+        // console.log(error,response,body)
+        institudes = JSON.parse(body).institudes;
+        FetchCreditTransfers(institudes[0].id)
+    });
+    
+}
+
+function FetchCreditTransfers(institude_id){
+    console.log(institude_id);
+    //credit_overseas.php?selCty=Finland&selI=B0525&txtK=&search=y&btn1=+Search+#myform
+    request(root+`credit_overseas.php?selCty=&selI=${institude_id}&txtK=&search=y&btn1=+Search+#myform`, function (error, response, body) {
+        
+        $ = cheerio.load(body);
+    
+        var tbody = $($('tbody')[5]);
+
+        var Institude = GetInnerText(($(tbody.find('tr')[0]).find('div.brown'))[0])
+        columns = ['Institude','Institude_id','country'].concat(BuildAttrs(tbody));     //collumn name of credit transfer table
+
+        console.log(columns)
+    });
+}
+
+function BuildAttrs(tbody){
+    var l = tbody.find('tr.table_title').find('td');
+    l=l.splice(0,l.length);
+    return l.map(function(element) {
+        return GetInnerText(element);
+    }, this);
+}
+
+
+// FetchCountries();
+GetCountriesAndInstutudesJSON();
