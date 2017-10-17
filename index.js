@@ -15,9 +15,10 @@ var moment = require('moment');
 
 //global variables
 var $;
-var countries=[];
-var institudes=[];
-columns=[];
+var countries = [];
+var institudes = [];
+var columns = [];
+var transfer_entries = [];
 
 var root = 'http://arr.ust.hk/ust_actoe/';
 
@@ -87,24 +88,32 @@ function GetCountriesAndInstutudesJSON(){
     request('http://localhost/usthing/exchange/countries_and_institudes.json', function (error, response, body) {
         // console.log(error,response,body)
         institudes = JSON.parse(body).institudes;
-        FetchCreditTransfers(institudes[0].id)
+        FetchCreditTransfers(institudes[0])
     });
     
 }
 
-function FetchCreditTransfers(institude_id){
-    console.log(institude_id);
-    //credit_overseas.php?selCty=Finland&selI=B0525&txtK=&search=y&btn1=+Search+#myform
-    request(root+`credit_overseas.php?selCty=&selI=${institude_id}&txtK=&search=y&btn1=+Search+#myform`, function (error, response, body) {
+function FetchCreditTransfers(institude_obj){
+    request(root+`credit_overseas.php?selCty=&selI=${institude_obj.id}&txtK=&search=y&btn1=+Search+#myform`, function (error, response, body) {
         
         $ = cheerio.load(body);
     
         var tbody = $($('tbody')[5]);
 
-        var Institude = GetInnerText(($(tbody.find('tr')[0]).find('div.brown'))[0])
-        columns = ['Institude','Institude_id','country'].concat(BuildAttrs(tbody));     //collumn name of credit transfer table
+        var institude = GetInnerText(($(tbody.find('tr')[0]).find('div.brown'))[0])
+        columns = BuildAttrs(tbody);     //collumn name of credit transfer table
 
-        console.log(columns)
+        var entries = tbody.find('tr');                 //credit transfer entries
+        entries = entries.splice(2,entries.length-2);
+        for(var i=0;i<entries.length;i++){
+            var tds = $(entries[i]).find('td');
+            var entry={'Institude':institude_obj.name,'Institude_id':institude_obj.id,'country':institude_obj.country};
+            for(var j=0; j<tds.length; j++){
+                entry[columns[j]]=GetInnerText(tds[j]);
+            }
+            transfer_entries.push(entry);
+        }
+        console.log(transfer_entries);
     });
 }
 
