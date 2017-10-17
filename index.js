@@ -19,8 +19,9 @@ var countries = [];
 var institudes = [];
 var columns = [];
 var transfer_entries = [];
+var institude_index=0;
 
-var root = 'http://arr.ust.hk/ust_actoe/';
+var root = 'http://arr.ust.hk';
 
 function GetInnerText(element){
     if(!element) return "ignored";
@@ -47,7 +48,7 @@ function WriteFile(file_name,string){
 }
 
 function FetchCountries(){
-    request(root+'credit_overseas.php', function (error, response, body) {
+    request(root+'/ust_actoe/credit_overseas.php', function (error, response, body) {
         
         $ = cheerio.load(body);
     
@@ -71,7 +72,7 @@ function FetchInstitudes(i=0){
         ), null, '  ');
         return;
     }
-    request(root+`sub_result.php?t=${Date.now()}&location=${countries[i]}`, function (error, response, body) {
+    request(root+`/ust_actoe/sub_result.php?t=${Date.now()}&location=${countries[i]}`, function (error, response, body) {
         var data = body.split('?');
         for(var j=0; j<data.length-1; j+=2){
             institudes.push({
@@ -88,32 +89,61 @@ function GetCountriesAndInstutudesJSON(){
     request('http://localhost/usthing/exchange/countries_and_institudes.json', function (error, response, body) {
         // console.log(error,response,body)
         institudes = JSON.parse(body).institudes;
-        FetchCreditTransfers(institudes[0])
+        FetchCreditTransfersByInstitude(institudes[0])
     });
     
 }
 
-function FetchCreditTransfers(institude_obj){
-    request(root+`credit_overseas.php?selCty=&selI=${institude_obj.id}&txtK=&search=y&btn1=+Search+#myform`, function (error, response, body) {
-        
-        $ = cheerio.load(body);
+function ParseCreditTransfers(body, institude_obj){
+    $ = cheerio.load(body);
     
-        var tbody = $($('tbody')[5]);
+    console.log('fetching: ',JSON.stringify(institude_obj));
 
-        var institude = GetInnerText(($(tbody.find('tr')[0]).find('div.brown'))[0])
-        columns = BuildAttrs(tbody);     //collumn name of credit transfer table
+    var tbody = $($('tbody')[5]);
 
-        var entries = tbody.find('tr');                 //credit transfer entries
-        entries = entries.splice(2,entries.length-2);
-        for(var i=0;i<entries.length;i++){
-            var tds = $(entries[i]).find('td');
-            var entry={'Institude':institude_obj.name,'Institude_id':institude_obj.id,'country':institude_obj.country};
-            for(var j=0; j<tds.length; j++){
-                entry[columns[j]]=GetInnerText(tds[j]);
-            }
-            transfer_entries.push(entry);
+    var institude = GetInnerText(($(tbody.find('tr')[0]).find('div.brown'))[0])
+    columns = BuildAttrs(tbody);     //collumn name of credit transfer table
+
+    var entries = tbody.find('tr');                 //credit transfer entries
+    entries = entries.splice(2,entries.length-2);
+    for(var i=0;i<entries.length;i++){
+        var tds = $(entries[i]).find('td');
+        var entry={'Institude':institude_obj.name,'Institude_id':institude_obj.id,'country':institude_obj.country};
+        for(var j=0; j<tds.length; j++){
+            entry[columns[j]]=GetInnerText(tds[j]);
         }
-        console.log(transfer_entries);
+        transfer_entries.push(entry);
+    }
+    // console.log(transfer_entries);
+    var a = $('a.link1');
+    var fetch_next=true;
+    a=a.splice(0,a.length);
+    for(var i=0; i<a.length; i++){
+        if(GetInnerText(a[i])=='Next') {
+            fetch_next=false;
+            FetchCreditTransfersByURL(root+a[i].attribs.href,institude_obj)
+        }
+    }
+    console.log(fetch_next);
+    if(fetch_next){
+        if(++institude_index<institudes.length){
+            FetchCreditTransfersByInstitude(institudes[institude_index]);
+        }
+        else{
+            WriteFile('transfers.json',JSON.stringify(transfer_entries));
+        }
+    }
+}
+
+function FetchCreditTransfersByInstitude(institude_obj){
+    request(root+`/ust_actoe/credit_overseas.php?selCty=&selI=${institude_obj.id}&txtK=&search=y&btn1=+Search+#myform`, function (error, response, body) {
+        ParseCreditTransfers(body,institude_obj);
+    });
+}
+
+function FetchCreditTransfersByURL(url,institude_obj){
+    request(url, function (error, response, body) {
+        ParseCreditTransfers(body,institude_obj);
     });
 }
 
