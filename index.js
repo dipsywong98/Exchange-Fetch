@@ -23,6 +23,7 @@ var institude_index=0;
 
 var root = 'http://arr.ust.hk';
 
+//utilities
 function GetInnerText(element){
     if(!element) return "ignored";
     var str = '';
@@ -47,6 +48,7 @@ function WriteFile(file_name,string){
     }); 
 }
 
+//fetch all countries and institudes (countries_and_institudes.json) 
 function FetchCountries(){
     request(root+'/ust_actoe/credit_overseas.php', function (error, response, body) {
         
@@ -85,6 +87,7 @@ function FetchInstitudes(i=0){
     });
 }
 
+//fetch all credit transfer datas (transfer.json)
 function GetCountriesAndInstutudesJSON(){
     request('http://localhost/usthing/exchange/countries_and_institudes.json', function (error, response, body) {
         // console.log(error,response,body)
@@ -101,7 +104,6 @@ function ParseCreditTransfers(body, institude_obj){
 
     var tbody = $($('tbody')[5]);
 
-    var institude = GetInnerText(($(tbody.find('tr')[0]).find('div.brown'))[0])
     columns = BuildAttrs(tbody);     //collumn name of credit transfer table
 
     var entries = tbody.find('tr');                 //credit transfer entries
@@ -114,7 +116,8 @@ function ParseCreditTransfers(body, institude_obj){
         }
         transfer_entries.push(entry);
     }
-    // console.log(transfer_entries);
+    
+    //fetch next page
     var a = $('a.link1');
     var fetch_next=true;
     a=a.splice(0,a.length);
@@ -124,6 +127,8 @@ function ParseCreditTransfers(body, institude_obj){
             FetchCreditTransfersByURL(root+a[i].attribs.href,institude_obj)
         }
     }
+
+    //fetch next institude's exchange data
     console.log(fetch_next);
     if(fetch_next){
         if(++institude_index<institudes.length){
@@ -133,6 +138,14 @@ function ParseCreditTransfers(body, institude_obj){
             WriteFile('transfers.json',JSON.stringify(transfer_entries));
         }
     }
+}
+
+function BuildAttrs(tbody){
+    var l = tbody.find('tr.table_title').find('td');
+    l=l.splice(0,l.length);
+    return l.map(function(element) {
+        return GetInnerText(element);
+    }, this);
 }
 
 function FetchCreditTransfersByInstitude(institude_obj){
@@ -147,14 +160,5 @@ function FetchCreditTransfersByURL(url,institude_obj){
     });
 }
 
-function BuildAttrs(tbody){
-    var l = tbody.find('tr.table_title').find('td');
-    l=l.splice(0,l.length);
-    return l.map(function(element) {
-        return GetInnerText(element);
-    }, this);
-}
-
-
-// FetchCountries();
-GetCountriesAndInstutudesJSON();
+// FetchCountries();                //get all participating countries and institudes
+GetCountriesAndInstutudesJSON();    //get all credit transfer data of institudes base on json got from FetchCountries()
