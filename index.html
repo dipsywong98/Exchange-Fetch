@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Timetable of a Class Room</title>
+        <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.2/vue.min.js"></script>
+
+        <style>
+            .loader {
+                border: 5px solid #f3f3f3;
+                border-radius: 50%;
+                border-top: 5px solid #3498db;
+                width: 50px;
+                height: 50px;
+                -webkit-animation: spin 2s linear infinite;
+                animation: spin 2s linear infinite;
+                margin: 10px
+            }
+            
+            @-webkit-keyframes spin {
+                0% { -webkit-transform: rotate(0deg); }
+                100% { -webkit-transform: rotate(360deg); }
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div class="container" id="app">
+            <h2>Exchange Credit Transfer Fetch</h2>
+            <table class="table-striped">
+                <thead>
+                    <tr>
+                        <th v-for="(v,key) in transfer_data[0]">{{key}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="transfer_entry in transfer_data">
+                        <td v-for="(detail,key) in transfer_entry">{{detail}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </body>
+
+    <script>
+var app = new Vue({
+  el: '#app',
+  data: {
+    transfer_data:[]
+  },
+  methods:{
+  }
+})
+
+$.ajax({
+    url: 'transfers.json',
+    context: document.body
+}).done(function(data) {
+    app.transfer_data = data;
+});
+    </script>
+</html>
