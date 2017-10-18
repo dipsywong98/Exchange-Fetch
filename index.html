@@ -1,9 +1,11 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <title>Timetable of a Class Room</title>
+        <title>Exchange Credit Transfer Fetch</title>
         <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.2/vue.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.2/vue.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
 
         <style>
             .loader {
@@ -30,8 +32,16 @@
     </head>
     
     <body>
-        <div class="container" id="app">
+        <div id="app">
             <h2>Exchange Credit Transfer Fetch</h2>
+            <div class="row">
+                <div class="input-field col 1" v-for="(v,key) in transfer_data[0]" >
+                    <input type="text" :id="key" onchange="Update()"/>
+                    <label :for="key">{{key}}</label>
+                </div>
+            </div>
+            
+            
             <table class="table-striped">
                 <thead>
                     <tr>
@@ -39,7 +49,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="transfer_entry in transfer_data">
+                    <tr v-for="transfer_entry in transfer_data" v-if="flag">
                         <td v-for="(detail,key) in transfer_entry">{{detail}}</td>
                     </tr>
                 </tbody>
@@ -51,16 +61,32 @@
 var app = new Vue({
   el: '#app',
   data: {
-    transfer_data:[]
+    transfer_data:[],
+    filters:{},
+    flag:true
   },
   methods:{
+    check:(transfer_entry)=>{
+        for(k in transfer_entry){
+            if(transfer_entry[k].match(RegExp(app.filters[k],'g')).length==0) return false;
+        }
+        return true;
+    }
   }
 })
+
+function Update(){
+    var inputs = $('input');
+    for(var i=0; i<inputs.length; i++){
+        app.filters[Object.keys(app.transfer_data[0])[i]]=inputs[i].value;
+    }
+}
 
 $.ajax({
     url: 'transfers.json',
     context: document.body
 }).done(function(data) {
+    transfer_data = data;
     app.transfer_data = data;
 });
     </script>
