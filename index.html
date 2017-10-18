@@ -49,7 +49,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="transfer_entry in transfer_data" v-if="flag">
+                    <tr v-for="transfer_entry in transfer_data">
                         <td v-for="(detail,key) in transfer_entry">{{detail}}</td>
                     </tr>
                 </tbody>
@@ -66,12 +66,7 @@ var app = new Vue({
     flag:true
   },
   methods:{
-    check:(transfer_entry)=>{
-        for(k in transfer_entry){
-            if(transfer_entry[k].match(RegExp(app.filters[k],'g')).length==0) return false;
-        }
-        return true;
-    }
+    
   }
 })
 
@@ -80,6 +75,13 @@ function Update(){
     for(var i=0; i<inputs.length; i++){
         app.filters[Object.keys(app.transfer_data[0])[i]]=inputs[i].value;
     }
+
+    app.transfer_data = transfer_data.filter((transfer_entry)=>{
+        for(k in transfer_entry){
+            if(!transfer_entry[k].match(RegExp(app.filters[k],'g'))) return false;
+        }
+        return true;
+    })
 }
 
 $.ajax({
