@@ -32,20 +32,20 @@
     </head>
     
     <body>
-        <div id="app">
+        <div id="app" class="container centered">
             <h2>Exchange Credit Transfer Fetch</h2>
             <div class="row">
-                <div class="input-field col 1" v-for="(v,key) in transfer_data[0]" >
+                <div class="input-field col 1" v-for="key in keys" >
                     <input type="text" :id="key" onchange="Update()"/>
                     <label :for="key">{{key}}</label>
                 </div>
             </div>
             
             
-            <table class="table-striped">
+            <table class="responsive-table striped">
                 <thead>
                     <tr>
-                        <th v-for="(v,key) in transfer_data[0]">{{key}}</th>
+                        <th v-for="key in keys">{{key}}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -63,7 +63,7 @@ var app = new Vue({
   data: {
     transfer_data:[],
     filters:{},
-    flag:true
+    keys:[]
   },
   methods:{
     
@@ -73,7 +73,7 @@ var app = new Vue({
 function Update(){
     var inputs = $('input');
     for(var i=0; i<inputs.length; i++){
-        app.filters[Object.keys(app.transfer_data[0])[i]]=inputs[i].value;
+        app.filters[app.keys[i]]=inputs[i].value;
     }
 
     app.transfer_data = transfer_data.filter((transfer_entry)=>{
@@ -89,7 +89,8 @@ $.ajax({
     context: document.body
 }).done(function(data) {
     transfer_data = data;
-    app.transfer_data = data;
+    app.keys = Object.keys(data[0]);
+    // app.transfer_data = data;
 });
     </script>
 </html>
