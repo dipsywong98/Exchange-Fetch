@@ -16,10 +16,10 @@ var moment = require('moment');
 //global variables
 var $;
 var countries = [];
-var institudes = [];
+var institutes = [];
 var columns = [];
 var transfer_entries = [];
-var institude_index=0;
+var institute_index=0;
 
 var root = 'http://arr.ust.hk';
 
@@ -48,7 +48,7 @@ function WriteFile(file_name,string){
     }); 
 }
 
-//fetch all countries and institudes (countries_and_institudes.json) 
+//fetch all countries and institutes (countries_and_institutes.json) 
 function FetchCountries(){
     request(root+'/ust_actoe/credit_overseas.php', function (error, response, body) {
         
@@ -59,17 +59,17 @@ function FetchCountries(){
         
         console.log(countries);
 
-        FetchInstitudes(0);
+        FetchInstitutes(0);
     });
 }
 
-function FetchInstitudes(i=0){
+function FetchInstitutes(i=0){
     if(i>=countries.length){
-        console.log(institudes);
-        WriteFile('countries_and_institudes.json',JSON.stringify(
+        console.log(institutes);
+        WriteFile('countries_and_institutes.json',JSON.stringify(
             {
                 countries:countries,
-                institudes:institudes
+                institutes:institutes
             }
         ), null, '  ');
         return;
@@ -77,30 +77,30 @@ function FetchInstitudes(i=0){
     request(root+`/ust_actoe/sub_result.php?t=${Date.now()}&location=${countries[i]}`, function (error, response, body) {
         var data = body.split('?');
         for(var j=0; j<data.length-1; j+=2){
-            institudes.push({
+            institutes.push({
                 name:data[j],
                 country:countries[i],
                 id:data[j+1]
             })
         }
-        FetchInstitudes(i+1);
+        FetchInstitutes(i+1);
     });
 }
 
 //fetch all credit transfer datas (transfer.json)
 function GetCountriesAndInstutudesJSON(){
-    request('http://localhost/usthing/exchange/countries_and_institudes.json', function (error, response, body) {
+    request('http://localhost/usthing/exchange/countries_and_institutes.json', function (error, response, body) {
         // console.log(error,response,body)
-        institudes = JSON.parse(body).institudes;
-        FetchCreditTransfersByInstitude(institudes[0])
+        institutes = JSON.parse(body).institutes;
+        FetchCreditTransfersByInstitute(institutes[0])
     });
     
 }
 
-function ParseCreditTransfers(body, institude_obj){
+function ParseCreditTransfers(body, institute_obj){
     $ = cheerio.load(body);
     
-    console.log('fetching: ',JSON.stringify(institude_obj));
+    console.log('fetching: ',JSON.stringify(institute_obj));
 
     var tbody = $($('tbody')[5]);
 
@@ -110,7 +110,7 @@ function ParseCreditTransfers(body, institude_obj){
     entries = entries.splice(2,entries.length-2);
     for(var i=0;i<entries.length;i++){
         var tds = $(entries[i]).find('td');
-        var entry={'Institude':institude_obj.name,'Institude_id':institude_obj.id,'country':institude_obj.country};
+        var entry={'Institute':institute_obj.name,'Institute_id':institute_obj.id,'country':institute_obj.country};
         for(var j=0; j<tds.length; j++){
             entry[columns[j]]=GetInnerText(tds[j]);
         }
@@ -124,15 +124,15 @@ function ParseCreditTransfers(body, institude_obj){
     for(var i=0; i<a.length; i++){
         if(GetInnerText(a[i])=='Next') {
             fetch_next=false;
-            FetchCreditTransfersByURL(root+a[i].attribs.href,institude_obj)
+            FetchCreditTransfersByURL(root+a[i].attribs.href,institute_obj)
         }
     }
 
-    //fetch next institude's exchange data
+    //fetch next institute's exchange data
     console.log(fetch_next);
     if(fetch_next){
-        if(++institude_index<institudes.length){
-            FetchCreditTransfersByInstitude(institudes[institude_index]);
+        if(++institute_index<institutes.length){
+            FetchCreditTransfersByInstitute(institutes[institute_index]);
         }
         else{
             WriteFile('transfers.json',JSON.stringify(transfer_entries));
@@ -148,17 +148,17 @@ function BuildAttrs(tbody){
     }, this);
 }
 
-function FetchCreditTransfersByInstitude(institude_obj){
-    request(root+`/ust_actoe/credit_overseas.php?selCty=&selI=${institude_obj.id}&txtK=&search=y&btn1=+Search+#myform`, function (error, response, body) {
-        ParseCreditTransfers(body,institude_obj);
+function FetchCreditTransfersByInstitute(institute_obj){
+    request(root+`/ust_actoe/credit_overseas.php?selCty=&selI=${institute_obj.id}&txtK=&search=y&btn1=+Search+#myform`, function (error, response, body) {
+        ParseCreditTransfers(body,institute_obj);
     });
 }
 
-function FetchCreditTransfersByURL(url,institude_obj){
+function FetchCreditTransfersByURL(url,institute_obj){
     request(url, function (error, response, body) {
-        ParseCreditTransfers(body,institude_obj);
+        ParseCreditTransfers(body,institute_obj);
     });
 }
 
-// FetchCountries();                //get all participating countries and institudes
-GetCountriesAndInstutudesJSON();    //get all credit transfer data of institudes base on json got from FetchCountries()
+// FetchCountries();                //get all participating countries and institutes
+GetCountriesAndInstutudesJSON();    //get all credit transfer data of institutes base on json got from FetchCountries()
