@@ -34,13 +34,16 @@
     <body>
         <div id="app" class="container centered">
             <h2>Exchange Credit Transfer Fetch</h2>
-            <div class="row">
-                <div class="input-field col 1" v-for="key in keys" >
-                    <input type="text" :id="key" onchange="Update()"/>
+            <div class="row" v-for="skeys in keys_input">
+                <div class="input-field col s3" v-for="key in skeys">
+                    <input type="text" class="autocomplete" :list="key" onchange="UpdateTable()"/>
                     <label :for="key">{{key}}</label>
+                    <datalist :id="key">
+                        <option v-for="v in filter_list[key]" :value="v">
+                    </datalist>
                 </div>
             </div>
-            
+            <a class="waves-effect waves-light btn" onclick="UpdateTable()">Search</a>
             
             <table class="responsive-table striped">
                 <thead>
@@ -58,19 +61,57 @@
     </body>
 
     <script>
+function StrContain(str1, str2){
+    return str1.indexOf(str2) !== -1;
+}
+
 var app = new Vue({
   el: '#app',
   data: {
     transfer_data:[],
+    transfer_data_temp:[],
     filters:{},
-    keys:[]
+    filter_list:{},
+    keys:[],
+    keys_input:[[]]
   },
   methods:{
     
   }
 })
 
-function Update(){
+function AppendUnique(list,element){
+    for(var i=list.length-1; i>=0;i--){
+        if(StrContain(list[i],element)||StrContain(element,list[i]))return list;
+    }
+    list.push(element);
+    return list;
+}
+
+function UpdateFilter(){
+    // window.alert();
+    console.log('update filter called')
+    var inputs = $('input');
+    for(var i=0; i<inputs.length; i++){
+        app.filters[app.keys[i]]=inputs[i].value;
+    }
+
+    app.transfer_data_temp = transfer_data.filter((transfer_entry)=>{
+        for(k in transfer_entry){
+            if(!transfer_entry[k].match(RegExp(app.filters[k],'g'))) return false;
+        }
+        return true;
+    });
+
+    for(var i=0; i<app.keys.length; i++) app.filter_list[app.keys[i]]=[];
+    for(var i=0; i<app.transfer_data_temp.length;i++){
+        for(var k in app.transfer_data_temp[i]){
+            app.filter_list[k]=AppendUnique(app.filter_list[k],app.transfer_data_temp[i][k]);
+        }
+    }
+}
+
+function UpdateTable(){
     var inputs = $('input');
     for(var i=0; i<inputs.length; i++){
         app.filters[app.keys[i]]=inputs[i].value;
@@ -82,6 +123,8 @@ function Update(){
         }
         return true;
     })
+    // UpdateFilter();
+    // app.transfer_data = app.transfer_data_temp;
 }
 
 $.ajax({
@@ -90,7 +133,8 @@ $.ajax({
 }).done(function(data) {
     transfer_data = data;
     app.keys = Object.keys(data[0]);
-    // app.transfer_data = data;
+    app.keys_input = [app.keys.slice(0,4),app.keys.slice(4,8),app.keys.slice(8,10)];
+    UpdateFilter();
 });
     </script>
 </html>
