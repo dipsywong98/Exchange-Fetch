@@ -34,7 +34,6 @@
                     </tr>
                 </tbody>
             </table>
-            <p v-if="display_index>=transfer_data_temp.length">End</p>
             <p>bottom</p>
         </div>
     </body>
@@ -126,6 +125,14 @@ $.ajax({
 $(window).scroll(function() {
    if($(window).scrollTop() + $(window).height() == $(document).height()) {
        console.log('bottom')
+       app.transfer_data = app.transfer_data_temp.slice(0,Math.min(app.display_index+10,app.transfer_data_temp.length));
+       app.display_index+=10;
+   }
+});
+$('tbody').scroll(function() {
+    console.log(Math.round($('tbody').scrollLeft()+$('tbody').width()) ,$('tbody')[0].scrollWidth)
+   if(Math.round($('tbody').scrollLeft()+$('tbody').width()) == $('tbody')[0].scrollWidth) {
+       console.log('right')
        app.transfer_data = app.transfer_data_temp.slice(0,Math.min(app.display_index+10,app.transfer_data_temp.length));
        app.display_index+=10;
    }
