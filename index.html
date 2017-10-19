@@ -16,7 +16,7 @@
             <h2>Exchange Credit Transfer Fetch</h2>
             <div class="row" v-for="skeys in keys_input">
                 <div class="input-field col s3" v-for="key in skeys">
-                    <input type="text" class="autocomplete" list="filter" :id="key" onfocus="UpdateFilterList(this.id)"/>
+                    <input type="text" class="autocomplete" list="filter" :id="key" onfocus="UpdateFilterList(this.id)" onkeypress="return PressEnter(event)" onchange="UpdateTable()"/>
                     <label :for="key">{{key}}</label>
                 </div>
             </div>
@@ -42,6 +42,13 @@ function StrContain(str1, str2){
     return str1.indexOf(str2) !== -1;
 }
 
+function PressEnter(e) {
+    if (e.keyCode == 13) {
+        UpdateTable();
+        return false;
+    }
+}
+
 function UpdateFilterList(key){
     console.log(key)
     app.inputing_filter = key;
@@ -60,7 +67,8 @@ var app = new Vue({
         filter_list:[],
         keys:[],
         keys_input:[[]],
-        inputing_filter:'none'
+        inputing_filter:'none',
+        display_index:0
     },
     methods:{
         
@@ -103,7 +111,10 @@ function FilterData(){
 }
 
 function UpdateTable(){
-    app.transfer_data = FilterData();
+    UpdateDataTemp();
+    app.display_index=0;
+    app.transfer_data = app.transfer_data_temp.slice(0,Math.min(app.display_index+10,app.transfer_data_temp.length))
+    app.display_index=10;
 }
 
 $.ajax({
@@ -114,6 +125,14 @@ $.ajax({
     app.keys = Object.keys(data[0]);
     app.keys_input = [app.keys.slice(0,4),app.keys.slice(4,8),app.keys.slice(8,10)];
     UpdateDataTemp();
+});
+
+$(window).scroll(function() {
+   if($(window).scrollTop() + $(window).height() == $(document).height()) {
+       console.log('bottom')
+       app.transfer_data = app.transfer_data_temp.slice(0,Math.min(app.display_index+10,app.transfer_data_temp.length));
+       app.display_index+=10;
+   }
 });
     </script>
 </html>
