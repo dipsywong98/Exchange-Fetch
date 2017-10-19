@@ -6,41 +6,18 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.2/vue.js"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
-
-        <style>
-            .loader {
-                border: 5px solid #f3f3f3;
-                border-radius: 50%;
-                border-top: 5px solid #3498db;
-                width: 50px;
-                height: 50px;
-                -webkit-animation: spin 2s linear infinite;
-                animation: spin 2s linear infinite;
-                margin: 10px
-            }
-            
-            @-webkit-keyframes spin {
-                0% { -webkit-transform: rotate(0deg); }
-                100% { -webkit-transform: rotate(360deg); }
-            }
-            
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        </style>
     </head>
     
     <body>
         <div id="app" class="container centered">
+                <datalist id="filter">
+                        <option v-for="v in filter_list" :value="v">
+                    </datalist>
             <h2>Exchange Credit Transfer Fetch</h2>
             <div class="row" v-for="skeys in keys_input">
                 <div class="input-field col s3" v-for="key in skeys">
-                    <input type="text" class="autocomplete" :list="key" onchange="UpdateTable()"/>
+                    <input type="text" class="autocomplete" list="filter" :id="key" onfocus="UpdateFilterList(this.id)"/>
                     <label :for="key">{{key}}</label>
-                    <datalist :id="key">
-                        <option v-for="v in filter_list[key]" :value="v">
-                    </datalist>
                 </div>
             </div>
             <a class="waves-effect waves-light btn" onclick="UpdateTable()">Search</a>
@@ -65,19 +42,29 @@ function StrContain(str1, str2){
     return str1.indexOf(str2) !== -1;
 }
 
+function UpdateFilterList(key){
+    console.log(key)
+    app.inputing_filter = key;
+    app.filter_list=[];
+    FilterData().forEach(function(element) {
+        app.filter_list=AppendUnique(app.filter_list,element[key]);
+    }, this);
+}
+
 var app = new Vue({
-  el: '#app',
-  data: {
-    transfer_data:[],
-    transfer_data_temp:[],
-    filters:{},
-    filter_list:{},
-    keys:[],
-    keys_input:[[]]
-  },
-  methods:{
-    
-  }
+    el: '#app',
+    data: {
+        transfer_data:[],
+        transfer_data_temp:[],
+        filters:{},
+        filter_list:[],
+        keys:[],
+        keys_input:[[]],
+        inputing_filter:'none'
+    },
+    methods:{
+        
+    }
 })
 
 function AppendUnique(list,element){
@@ -88,20 +75,10 @@ function AppendUnique(list,element){
     return list;
 }
 
-function UpdateFilter(){
-    // window.alert();
+function UpdateDataTemp(){
     console.log('update filter called')
-    var inputs = $('input');
-    for(var i=0; i<inputs.length; i++){
-        app.filters[app.keys[i]]=inputs[i].value;
-    }
 
-    app.transfer_data_temp = transfer_data.filter((transfer_entry)=>{
-        for(k in transfer_entry){
-            if(!transfer_entry[k].match(RegExp(app.filters[k],'g'))) return false;
-        }
-        return true;
-    });
+    app.transfer_data_temp = FilterData();
 
     for(var i=0; i<app.keys.length; i++) app.filter_list[app.keys[i]]=[];
     for(var i=0; i<app.transfer_data_temp.length;i++){
@@ -111,20 +88,22 @@ function UpdateFilter(){
     }
 }
 
-function UpdateTable(){
+function FilterData(){
     var inputs = $('input');
     for(var i=0; i<inputs.length; i++){
         app.filters[app.keys[i]]=inputs[i].value;
     }
 
-    app.transfer_data = transfer_data.filter((transfer_entry)=>{
+    return transfer_data.filter((transfer_entry)=>{
         for(k in transfer_entry){
             if(!transfer_entry[k].match(RegExp(app.filters[k],'g'))) return false;
         }
         return true;
     })
-    // UpdateFilter();
-    // app.transfer_data = app.transfer_data_temp;
+}
+
+function UpdateTable(){
+    app.transfer_data = FilterData();
 }
 
 $.ajax({
@@ -134,7 +113,7 @@ $.ajax({
     transfer_data = data;
     app.keys = Object.keys(data[0]);
     app.keys_input = [app.keys.slice(0,4),app.keys.slice(4,8),app.keys.slice(8,10)];
-    UpdateFilter();
+    UpdateDataTemp();
 });
     </script>
 </html>
