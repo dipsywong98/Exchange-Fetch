@@ -34,6 +34,8 @@
                     </tr>
                 </tbody>
             </table>
+            <p v-if="display_index>=transfer_data_temp.length">End</p>
+            <p>bottom</p>
         </div>
     </body>
 
@@ -51,7 +53,7 @@ function PressEnter(e) {
 
 function AppendUnique(list,element){
     for(var i=list.length-1; i>=0;i--){
-        if(StrContain(list[i],element)||StrContain(element,list[i]))return list;
+        if(list[i]==element)return list;
     }
     list.push(element);
     return list;
@@ -81,6 +83,7 @@ function UpdateFilterList(key){
     FilterData().forEach(function(element) {
         app.filter_list=AppendUnique(app.filter_list,element[key]);
     }, this);
+    app.filter_list=app.filter_list.sort();
 }
 
 function UpdateDataTemp(){
