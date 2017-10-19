@@ -110,7 +110,7 @@ function ParseCreditTransfers(body, institute_obj){
     entries = entries.splice(2,entries.length-2);
     for(var i=0;i<entries.length;i++){
         var tds = $(entries[i]).find('td');
-        var entry={'Institute':institute_obj.name,'Institute_id':institute_obj.id,'country':institute_obj.country};
+        var entry={'Institute':institute_obj.name,'Institute_id':institute_obj.id,'Country':institute_obj.country};
         for(var j=0; j<tds.length; j++){
             entry[columns[j]]=GetInnerText(tds[j]);
         }

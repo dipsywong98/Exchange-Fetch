@@ -10,9 +10,9 @@
     
     <body>
         <div id="app" class="container centered">
-                <datalist id="filter">
-                        <option v-for="v in filter_list" :value="v">
-                    </datalist>
+            <datalist id="filter">
+                <option v-for="v in filter_list" :value="v">
+            </datalist>
             <h2>Exchange Credit Transfer Fetch</h2>
             <div class="row" v-for="skeys in keys_input">
                 <div class="input-field col s3" v-for="key in skeys">
@@ -49,13 +49,12 @@ function PressEnter(e) {
     }
 }
 
-function UpdateFilterList(key){
-    console.log(key)
-    app.inputing_filter = key;
-    app.filter_list=[];
-    FilterData().forEach(function(element) {
-        app.filter_list=AppendUnique(app.filter_list,element[key]);
-    }, this);
+function AppendUnique(list,element){
+    for(var i=list.length-1; i>=0;i--){
+        if(StrContain(list[i],element)||StrContain(element,list[i]))return list;
+    }
+    list.push(element);
+    return list;
 }
 
 var app = new Vue({
@@ -75,25 +74,19 @@ var app = new Vue({
     }
 })
 
-function AppendUnique(list,element){
-    for(var i=list.length-1; i>=0;i--){
-        if(StrContain(list[i],element)||StrContain(element,list[i]))return list;
-    }
-    list.push(element);
-    return list;
+function UpdateFilterList(key){
+    console.log(key)
+    app.inputing_filter = key;
+    app.filter_list=[];
+    FilterData().forEach(function(element) {
+        app.filter_list=AppendUnique(app.filter_list,element[key]);
+    }, this);
 }
 
 function UpdateDataTemp(){
     console.log('update filter called')
 
     app.transfer_data_temp = FilterData();
-
-    for(var i=0; i<app.keys.length; i++) app.filter_list[app.keys[i]]=[];
-    for(var i=0; i<app.transfer_data_temp.length;i++){
-        for(var k in app.transfer_data_temp[i]){
-            app.filter_list[k]=AppendUnique(app.filter_list[k],app.transfer_data_temp[i][k]);
-        }
-    }
 }
 
 function FilterData(){
