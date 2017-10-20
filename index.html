@@ -16,11 +16,11 @@
             <h2>Exchange Credit Transfer Fetch</h2>
             <div class="row" v-for="skeys in keys_input">
                 <div class="input-field col s3" v-for="key in skeys">
-                    <input type="text" class="autocomplete" list="filter" :id="key" onfocus="UpdateFilterList(this.id)" onkeypress="return PressEnter(event)" onchange="UpdateTable()"/>
+                    <input type="text" class="autocomplete" list="filter" :id="key" onfocus="UpdatePickList(this.id)" onkeypress="return PressEnter(event)" onchange="RenderTable()"/>
                     <label :for="key">{{key}}</label>
                 </div>
             </div>
-            <a class="waves-effect waves-light btn" onclick="UpdateTable()">Search</a>
+            <a class="waves-effect waves-light btn" onclick="RenderTable()">Search</a>
             
             <table class="responsive-table striped">
                 <thead>
@@ -45,7 +45,7 @@ function StrContain(str1, str2){
 
 function PressEnter(e) {
     if (e.keyCode == 13) {
-        UpdateTable();
+        RenderTable();
         return false;
     }
 }
@@ -75,7 +75,7 @@ var app = new Vue({
     }
 })
 
-function UpdateFilterList(key){
+function UpdatePickList(key){
     console.log(key)
     app.inputing_filter = key;
     app.filter_list=[];
@@ -86,8 +86,6 @@ function UpdateFilterList(key){
 }
 
 function UpdateDataTemp(){
-    console.log('update filter called')
-
     app.transfer_data_temp = FilterData();
 }
 
@@ -110,7 +108,7 @@ function FilterData(){
     });
 }
 
-function UpdateTable(){
+function RenderTable(){
     UpdateDataTemp();
     app.display_index=0;
     app.transfer_data = app.transfer_data_temp.slice(0,Math.min(app.display_index+10,app.transfer_data_temp.length))
