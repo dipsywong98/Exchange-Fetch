@@ -2,10 +2,10 @@
 <html>
     <head>
         <title>Exchange Credit Transfer Fetch</title>
-        <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.2/vue.js"></script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+        <script src="js/jquery-3.2.1.min.js"></script>
+        <script src="js/vue.min.js"></script>
+        <link rel="stylesheet" href="css/materialize.min.css">
+        <script src="js/materialize.min.js"></script>
     </head>
     
     <body>
@@ -97,12 +97,17 @@ function FilterData(){
         app.filters[app.keys[i]]=inputs[i].value;
     }
 
-    return transfer_data.filter((transfer_entry)=>{
+    var temp = transfer_data.filter((transfer_entry)=>{
         for(k in transfer_entry){
             if(!transfer_entry[k].match(RegExp(app.filters[k],'g'))) return false;
         }
         return true;
-    })
+    });
+    if(temp.length==1)return temp;
+    return temp.filter((transfer_entry)=>{
+        if(transfer_entry['Subject']=='No record(s) found.') return false;
+        return true;
+    });
 }
 
 function UpdateTable(){
