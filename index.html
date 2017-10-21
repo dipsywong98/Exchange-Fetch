@@ -15,11 +15,11 @@
             </datalist>
             <h2>Exchange Credit Transfer Fetch</h2>
             <div class="row" v-for="(filter,k) in filters" style="margin-bottom:0px">
-                <select class="browser-default col s3" :onchange="'app.filters['+k+'].key=this.value'" style="margin-top: 15px;" :value="filter.key">
+                <select class="browser-default col s3" :onchange="'app.filters['+k+'].key=this.value;RenderTable()'" style="margin-top: 15px;" :value="filter.key">
                     <option v-for="key in keys" :value="key">{{key}}</option>
                 </select>
                 <div class="input-field col s8">
-                    <input placeholder="Filtering text or RegEx" type="text" class="autocomplete" list="filter" :id="'f'+k" :onfocus="'RenderPickList(\''+filter.key+'\')'" onkeypress="return PressEnter(event)" :onchange="`app.filters[${k}].string=this.value;RenderTable()`" style="margin-bottom:0px" :value="filter.string"/>
+                    <input placeholder="Filtering text or RegEx" type="text" class="autocomplete" list="filter" :id="'f'+k" :onfocus="'RenderPickList(\''+filter.key+'\')'" :onkeypress="`return PressEnter(event,${k},this.value)`" :onchange="`app.filters[${k}].string=this.value;RenderTable()`" style="margin-bottom:0px" :value="filter.string"/>
                 </div>
                 <div class="col s1" style="margin-top:10px">
                     <a class="btn-floating btn waves-effect waves-light grey lighten-1" :onclick="`RemoveFilter(${k})`"><i class="tiny material-icons" style="width:40px;height:40px;margin-bottom:8px">delete</i></a>
@@ -53,8 +53,9 @@ function StrContain(str1, str2){
     return str1.indexOf(str2) !== -1;
 }
 
-function PressEnter(e) {
+function PressEnter(e,k,v) {
     if (e.keyCode == 13) {
+        app.filters[k].string=v;
         RenderTable();
         return false;
     }
