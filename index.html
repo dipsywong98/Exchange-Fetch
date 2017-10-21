@@ -14,6 +14,8 @@
                 <option v-for="v in filter_picklist" :value="v">
             </datalist>
             <h2>Exchange Credit Transfer Fetch</h2>
+            <p>Fetch all data from <a href="http://arr.ust.hk/ust_actoe/credit_overseas.php">http://arr.ust.hk/ust_actoe/credit_overseas.php</a> | 
+            repo:<a href="https://github.com/dipsywong98/Exchange-Fetch">https://github.com/dipsywong98/Exchange-Fetch</a></p>
             <div class="row" v-for="(filter,k) in filters" style="margin-bottom:0px">
                 <select class="browser-default col s3" :onchange="'app.filters['+k+'].key=this.value;RenderTable()'" style="margin-top: 15px;" :value="filter.key">
                     <option v-for="key in keys" :value="key">{{key}}</option>
