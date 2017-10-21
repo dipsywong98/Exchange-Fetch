@@ -11,12 +11,12 @@
     <body>
         <div id="app" class="container centered">
             <datalist id="filter">
-                <option v-for="v in filter_list" :value="v">
+                <option v-for="v in filter_picklist" :value="v">
             </datalist>
             <h2>Exchange Credit Transfer Fetch</h2>
             <div class="row" v-for="skeys in keys_input">
                 <div class="input-field col s3" v-for="key in skeys">
-                    <input type="text" class="autocomplete" list="filter" :id="key" onfocus="UpdatePickList(this.id)" onkeypress="return PressEnter(event)" onchange="RenderTable()"/>
+                    <input type="text" class="autocomplete" list="filter" :id="key" onfocus="RenderPickList(this.id)" onkeypress="return PressEnter(event)" onchange="RenderTable()"/>
                     <label :for="key">{{key}}</label>
                 </div>
             </div>
@@ -39,6 +39,8 @@
     </body>
 
     <script>
+var transfer_data_temp=[];
+
 function StrContain(str1, str2){
     return str1.indexOf(str2) !== -1;
 }
@@ -62,12 +64,10 @@ var app = new Vue({
     el: '#app',
     data: {
         transfer_data:[],
-        transfer_data_temp:[],
-        filters:{},
-        filter_list:[],
+        filter_picklist:[],
         keys:[],
         keys_input:[[]],
-        inputing_filter:'none',
+        inputing_key:'none',
         display_index:0
     },
     methods:{
@@ -75,29 +75,30 @@ var app = new Vue({
     }
 })
 
-function UpdatePickList(key){
+function RenderPickList(key){
     console.log(key)
-    app.inputing_filter = key;
-    app.filter_list=[];
+    app.inputing_key = key;
+    app.filter_picklist=[];
     FilterData().forEach(function(element) {
-        app.filter_list=AppendUnique(app.filter_list,element[key]);
+        app.filter_picklist=AppendUnique(app.filter_picklist,element[key]);
     }, this);
-    app.filter_list=app.filter_list.sort();
+    app.filter_picklist=app.filter_picklist.sort();
 }
 
 function UpdateDataTemp(){
-    app.transfer_data_temp = FilterData();
+    transfer_data_temp = FilterData();
 }
 
 function FilterData(){
     var inputs = $('input');
+    var filters={};
     for(var i=0; i<inputs.length; i++){
-        app.filters[app.keys[i]]=inputs[i].value;
+        filters[app.keys[i]]=inputs[i].value;
     }
 
     var temp = transfer_data.filter((transfer_entry)=>{
         for(k in transfer_entry){
-            if(!transfer_entry[k].match(RegExp(app.filters[k],'g'))) return false;
+            if(!transfer_entry[k].match(RegExp(filters[k],'g'))) return false;
         }
         return true;
     });
@@ -111,7 +112,7 @@ function FilterData(){
 function RenderTable(){
     UpdateDataTemp();
     app.display_index=0;
-    app.transfer_data = app.transfer_data_temp.slice(0,Math.min(app.display_index+10,app.transfer_data_temp.length))
+    app.transfer_data = transfer_data_temp.slice(0,Math.min(app.display_index+10,transfer_data_temp.length))
     app.display_index=10;
 }
 
@@ -128,7 +129,7 @@ $.ajax({
 $(window).scroll(function() {
    if($(window).scrollTop() + $(window).height() == $(document).height()) {
        console.log('bottom')
-       app.transfer_data = app.transfer_data_temp.slice(0,Math.min(app.display_index+10,app.transfer_data_temp.length));
+       app.transfer_data = transfer_data_temp.slice(0,Math.min(app.display_index+10,transfer_data_temp.length));
        app.display_index+=10;
    }
 });
@@ -136,7 +137,7 @@ $('tbody').scroll(function() {
     console.log(Math.round($('tbody').scrollLeft()+$('tbody').width()) ,$('tbody')[0].scrollWidth)
    if(Math.round($('tbody').scrollLeft()+$('tbody').width()) == $('tbody')[0].scrollWidth) {
        console.log('right')
-       app.transfer_data = app.transfer_data_temp.slice(0,Math.min(app.display_index+10,app.transfer_data_temp.length));
+       app.transfer_data = transfer_data_temp.slice(0,Math.min(app.display_index+10,transfer_data_temp.length));
        app.display_index+=10;
    }
 });
