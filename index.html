@@ -19,7 +19,7 @@
                     <option v-for="key in keys" :value="key">{{key}}</option>
                 </select>
                 <div class="input-field col s9">
-                    <input placeholder="Filtering text" type="text" class="autocomplete" list="filter" :id="'f'+k" :onfocus="'RenderPickList(\''+filter.key+'\')'" onkeypress="return PressEnter(event)" :onchange="`app.filters[${k}].string=this.value;RenderTable()`"/>
+                    <input placeholder="Filtering text or RegEx" type="text" class="autocomplete" list="filter" :id="'f'+k" :onfocus="'RenderPickList(\''+filter.key+'\')'" onkeypress="return PressEnter(event)" :onchange="`app.filters[${k}].string=this.value;RenderTable()`"/>
                 </div>
             </div>
             <a class="waves-effect waves-light btn" onclick="RenderTable()">Search</a>
@@ -84,7 +84,6 @@ function Filter(filter_key, filter_string){
 }
 
 async function RenderPickList(key){
-    console.log(key)
     app.inputing_key = key;
     app.filter_picklist=[];
     var temp = await FilterData()
@@ -100,8 +99,8 @@ function FilterData(){
             temp = transfer_data;
             app.filters.forEach((filter)=>{
                 [key,regex] = [filter.key,RegExp(filter.string,'g')];
-                console.log(regex);
                 temp = temp.filter((entry)=>{
+                    if(!entry[key]) return false;
                     if(!entry[key].match(regex))return false;
                     return true;
                 })
@@ -131,21 +130,17 @@ $.ajax({
     app.keys = Object.keys(data[0]);
     app.keys_input = [app.keys.slice(0,4),app.keys.slice(4,8),app.keys.slice(8,10)];
     UpdateDataTemp();
-    console.log('push',app.keys[0]);
     app.filters.push(new Filter(app.keys[0],''));
 });
 
 $(window).scroll(function() {
    if($(window).scrollTop() + $(window).height() == $(document).height()) {
-       console.log('bottom')
        app.transfer_data = transfer_data_temp.slice(0,Math.min(app.display_index+10,transfer_data_temp.length));
        app.display_index+=10;
    }
 });
 $('tbody').scroll(function() {
-    console.log(Math.round($('tbody').scrollLeft()+$('tbody').width()) ,$('tbody')[0].scrollWidth)
    if(Math.round($('tbody').scrollLeft()+$('tbody').width()) == $('tbody')[0].scrollWidth) {
-       console.log('right')
        app.transfer_data = transfer_data_temp.slice(0,Math.min(app.display_index+10,transfer_data_temp.length));
        app.display_index+=10;
    }
