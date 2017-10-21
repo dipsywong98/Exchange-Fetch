@@ -85,10 +85,6 @@ function RenderPickList(key){
     app.filter_picklist=app.filter_picklist.sort();
 }
 
-function UpdateDataTemp(){
-    transfer_data_temp = FilterData();
-}
-
 function FilterData(){
     var inputs = $('input');
     var filters={};
@@ -110,7 +106,7 @@ function FilterData(){
 }
 
 function RenderTable(){
-    UpdateDataTemp();
+    transfer_data_temp = FilterData();;
     app.display_index=0;
     app.transfer_data = transfer_data_temp.slice(0,Math.min(app.display_index+10,transfer_data_temp.length))
     app.display_index=10;
@@ -123,7 +119,7 @@ $.ajax({
     transfer_data = data;
     app.keys = Object.keys(data[0]);
     app.keys_input = [app.keys.slice(0,4),app.keys.slice(4,8),app.keys.slice(8,10)];
-    UpdateDataTemp();
+    transfer_data_temp = FilterData();;
 });
 
 $(window).scroll(function() {
