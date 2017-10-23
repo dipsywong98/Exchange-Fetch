@@ -6,6 +6,7 @@
         <script src="js/vue.min.js"></script>
         <link rel="stylesheet" href="css/materialize.min.css">
         <script src="js/materialize.min.js"></script>
+        <script src="js/moment.min.js"></script>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> 
     </head>
     <body>
@@ -44,7 +45,7 @@
                     </tr>
                 </tbody>
             </table>
-            <p>bottom</p>
+            <p v-if="!!updates" style="margin-top:50px">Last Update : {{updates.message}} ({{updates.time}})</p>
         </div>
     </body>
 
@@ -80,7 +81,8 @@ var app = new Vue({
         filters:[],
         keys_input:[[]],
         inputing_key:'none',
-        display_index:0
+        display_index:0,
+        updates:false
     },
     methods:{
         
@@ -139,6 +141,16 @@ async function RenderTable(){
 async function UpdateDataTemp(){
     transfer_data_temp = await FilterData();
 }
+
+$.ajax({
+    url: 'https://api.github.com/repos/dipsywong98/Exchange-Fetch/commits/master',
+    context: document.body
+}).done(function(data){
+    app.updates = {
+        message:data.commit.message,
+        time:moment(data.commit.committer.date).format('YYYY-MM-DD HH:mm:ss')
+    }
+})
 
 $.ajax({
     url: 'transfers.json',
