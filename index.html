@@ -4,6 +4,7 @@
         <title>Exchange Credit Transfer Fetch</title>
         <script src="js/jquery-3.2.1.min.js"></script>
         <script src="js/vue.min.js"></script>
+        <script src="js/stable.min.js"></script>
         <link rel="stylesheet" href="css/materialize.min.css">
         <script src="js/materialize.min.js"></script>
         <script src="js/moment.min.js"></script>
@@ -21,8 +22,14 @@
                 <select class="browser-default col s3" :onchange="'app.filters['+k+'].key=this.value;RenderTable()'" style="margin-top: 15px;" :value="filter.key">
                     <option v-for="key in keys" :value="key">{{key}}</option>
                 </select>
-                <div class="input-field col s8">
+                <div class="input-field col s8" v-if="!advance">
                     <input placeholder="Filtering text or RegEx" type="text" class="autocomplete" list="filter" :id="'f'+k" :onfocus="'RenderPickList(\''+filter.key+'\')'" :onkeypress="`return PressEnter(event,${k},this.value)`" :onchange="`app.filters[${k}].string=this.value;RenderTable()`" style="margin-bottom:0px" :value="filter.string"/>
+                </div>
+                <div class="input-field col s7" v-if="advance">
+                    <input placeholder="Filtering text or RegEx" type="text" class="autocomplete" list="filter" :id="'f'+k" :onfocus="'RenderPickList(\''+filter.key+'\')'" onkeypress="return PressEnter(event)" :onchange="`app.filters[${k}].string=this.value;RenderTable()`" style="margin-bottom:0px" :value="filter.string"/>
+                </div>
+                <div class="input-field col s1" v-if="advance">
+                    <input class="validate" placeholder="Weight" type="text" :id="'w'+k" onkeypress="return PressEnter(event)" :onchange="`app.filters[${k}].weight=this.value;RenderTable()`" style="margin-bottom:0px" :value="filter.weight"/>
                 </div>
                 <div class="col s1" style="margin-top:10px">
                     <a class="btn-floating btn waves-effect waves-light grey lighten-1" :onclick="`RemoveFilter(${k})`"><i class="tiny material-icons" style="width:40px;height:40px;margin-bottom:8px">delete</i></a>
@@ -31,20 +38,53 @@
             <div class="row" style="margin-top:20px">
                 <a class="waves-effect waves-light btn red accent-2" onclick="PushFilter()">add Filter</a>
                 <a class="waves-effect waves-light btn" style="float:right;" onclick="RenderTable()">Search</a>
+                <span class="switch" style="float:right;margin-right:10px;margin-top:10px">
+                    <label>
+                      Basic
+                      <input type="checkbox" onclick="SwitchMode()">
+                      <span class="lever"></span>
+                      Advance
+                    </label>
+                </span>
             </div>
             
             <table class="responsive-table striped">
-                <thead>
+                <thead v-if="!advance">
                     <tr>
                         <th v-for="key in keys">{{key}}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="transfer_entry in transfer_data">
+                    <tr v-for="transfer_entry in transfer_data" v-if="!advance">
                         <td v-for="(detail,key) in transfer_entry">{{detail}}</td>
                     </tr>
                 </tbody>
             </table>
+            
+            <ul class="collapsible popout" data-collapsible="accordion" >
+                <li v-for="(transfer_entry,index) in transfer_data" v-if="advance">
+                    <div class="collapsible-header" :onclick="`ExpandCollapsible(${index})`">
+                        <span style="width:60%;">{{transfer_entry.Institute}}</span> <span style="width:20%">({{transfer_entry.Country}})</span> <span  style="width:20%;float:right;text-align:right">mark:{{transfer_entry.weight}}</span>
+                    </div>
+                    <div class="collapsible-body" v-if="transfer_entry.active_shown">
+                        <span>{{transfer_entry.Institute}} {{app.active_index}}</span>
+                        <table class="responsive-table striped">
+                                <thead>
+                                    <tr>
+                                        <th v-for="key in keys">{{key}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="transfer_entry in all_data.filter((d)=>{if(d.Institute==transfer_data[app.active_index].Institute)return true})">
+                                        <td v-for="(detail,key) in transfer_entry">{{detail}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                    </div>
+                </li>
+            </ul>
+
+            <p>bottom</p>
             <p v-if="!!updates" style="margin-top:50px">Last Update : {{updates.message}} ({{updates.time}})</p>
         </div>
     </body>
@@ -75,6 +115,7 @@ function AppendUnique(list,element){
 var app = new Vue({
     el: '#app',
     data: {
+        all_data:[],
         transfer_data:[],
         filter_picklist:[],
         keys:[],
@@ -82,17 +123,26 @@ var app = new Vue({
         keys_input:[[]],
         inputing_key:'none',
         display_index:0,
-        updates:false
+        advance:false,
+        updates:false,
+        active_index:false
     },
     methods:{
         
     }
 })
 
+function SwitchMode(){
+    app.advance = !app.advance;
+    app.active_index = 0;
+    RenderTable();
+}
+
 function PushFilter(){
     app.filters.push({
         key:app.keys[0],
-        string:''
+        string:'',
+        weight:1
     });
 }
 
@@ -110,36 +160,107 @@ async function RenderPickList(key){
     app.filter_picklist=app.filter_picklist.sort();
 }
 
+//for basic use
 function FilterData(){
     return new Promise(resolve => {
         setTimeout(() => {
             temp = transfer_data;
-            app.filters.forEach((filter)=>{
-                [key,regex] = [filter.key,RegExp(filter.string,'g')];
-                temp = temp.filter((entry)=>{
-                    if(entry[key]){
-                        if(!entry[key].match(regex))return false;
-                        return true;
-                    }
-                    return false
-                    
+            if(!app.advance){
+                app.filters.forEach((filter)=>{
+                    [key,regex] = [filter.key,RegExp(filter.string,'g')];
+                    temp = temp.filter((entry)=>{
+                        if(entry[key]){
+                            if(!entry[key].match(regex))return false;
+                            return true;
+                        }
+                        return false
+                        
+                    })
                 })
-            })
+            }
             resolve(temp);
         }, 1);
     });
     
 }
 
+//for advance use
+function RankData(){
+    return new Promise(resolve => {
+        setTimeout(() => {
+            temp = transfer_data;
+            institutes = {};
+            if(app.advance){
+                app.filters.forEach((filter)=>{
+                    [key,regex] = [filter.key,RegExp(filter.string,'g')];
+                    temp.forEach((entry)=>{
+                        if(entry[key]){
+                            if(entry[key].match(regex)){
+                                //an entry in keys match the filter
+                                if(!(entry.Institute in institutes)){
+                                    institutes[entry.Institute]={
+                                        Institute_id:entry.Institute_id,
+                                        Country:entry.Country,
+                                        weight:filter.weight,
+                                        matched:[entry[key]]};
+                                }
+                                else{
+                                    if(institutes[entry.Institute].matched.indexOf(entry[key])===-1){
+                                        institutes[entry.Institute].weight+=filter.weight;
+                                        institutes[entry.Institute].matched.push(entry[key])
+                                    }
+                                    
+                                }
+                            }
+                        }
+                        
+                    })
+                })
+            }
+            list = [];
+            Object.keys(institutes).forEach((k)=>{
+                list.push({
+                    Institute:k,
+                    Institute_id:institutes[k].Institute_id,
+                    Country:institutes[k].Country,
+                    weight:institutes[k].weight,
+                    active_shown:false
+                });
+            })
+
+            list = stable(list,(a,b)=>{return b.Institute < a.Institute})
+            list = stable(list,(a,b)=>{return b.Country < a.Country})
+            list = stable(list,(a,b)=>{return b.weight - a.weight})
+            resolve(list);
+        }, 1);
+    });
+    
+}
+
 async function RenderTable(){
-    transfer_data_temp = await FilterData();;
+    if(!app.advance){
+        transfer_data_temp = await FilterData();
+    }
+    else{
+        transfer_data_temp = await RankData();
+        if(app.active_index<transfer_data_temp.length){
+            transfer_data_temp[app.active_index].active_shown = true;
+        }
+    }
     app.display_index=0;
     app.transfer_data = transfer_data_temp.slice(0,Math.min(app.display_index+10,transfer_data_temp.length))
     app.display_index=10;
 }
 
+function ExpandCollapsible(index){
+    app.active_index = index;
+    app.transfer_data[index].active_shown = true;
+    transfer_data_temp[index].active_shown = true;
+}
+
 async function UpdateDataTemp(){
     transfer_data_temp = await FilterData();
+    app.all_data = transfer_data_temp;
 }
 
 $.ajax({
@@ -165,8 +286,8 @@ $.ajax({
 
 $(window).scroll(function() {
    if($(window).scrollTop() + $(window).height() == $(document).height()) {
-       app.transfer_data = transfer_data_temp.slice(0,Math.min(app.display_index+10,transfer_data_temp.length));
-       app.display_index+=10;
+        app.transfer_data = transfer_data_temp.slice(0,Math.min(app.display_index+10,transfer_data_temp.length));
+        app.display_index+=10;
    }
 });
 $('tbody').scroll(function() {
