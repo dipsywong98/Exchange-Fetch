@@ -155,20 +155,38 @@ function RankData(){
     return new Promise(resolve => {
         setTimeout(() => {
             temp = transfer_data;
+            institudes = {};
             if(app.advance){
                 app.filters.forEach((filter)=>{
                     [key,regex] = [filter.key,RegExp(filter.string,'g')];
-                    temp = temp.filter((entry)=>{
+                    temp.forEach((entry)=>{
                         if(entry[key]){
-                            if(!entry[key].match(regex))return false;
-                            return true;
+                            if(entry[key].match(regex)){
+                                //an entry in keys match the filter
+                                if(!(entry.Institute in institudes)){
+                                    institudes[entry.Institute]={weight:filter.weight,matched:[entry[key]]};
+                                }
+                                else{
+                                    if(institudes[entry.Institute].matched.indexOf(entry[key])===-1){
+                                        institudes[entry.Institute].weight+=filter.weight;
+                                        institudes[entry.Institute].matched.push(entry[key])
+                                    }
+                                    
+                                }
+                            }
                         }
-                        return false
                         
                     })
                 })
             }
-            resolve(temp);
+            list = [];
+            Object.keys(institudes).forEach((k)=>{
+                list.push({Institute:k,weight:institudes[k]});
+            })
+            list.sort((a,b)=>{return b.weight-a.weight})
+            resolve(list);
+
+            console.log(list)
         }, 1);
     });
     
