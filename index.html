@@ -4,6 +4,7 @@
         <title>Exchange Credit Transfer Fetch</title>
         <script src="js/jquery-3.2.1.min.js"></script>
         <script src="js/vue.min.js"></script>
+        <script src="js/stable.min.js"></script>
         <link rel="stylesheet" href="css/materialize.min.css">
         <script src="js/materialize.min.js"></script>
         <script src="js/moment.min.js"></script>
@@ -62,7 +63,11 @@
             
             <ul class="collapsible popout" data-collapsible="accordion" >
                 <li v-for="transfer_entry in transfer_data" v-if="advance">
-                    <div class="collapsible-header">{{transfer_entry.Institute}} {{transfer_entry.Country}} {{transfer_entry.weight}}</div>
+                    <div class="collapsible-header">
+                        <!-- <div class="row"> -->
+                            <span style="width:60%;">{{transfer_entry.Institute}}</span> <span style="width:20%">({{transfer_entry.Country}})</span> <span  style="width:20%;float:right;text-align:right">mark:{{transfer_entry.weight}}</span>
+                        <!-- </div> -->
+                    </div>
                     <div class="collapsible-body"><span>Lorem ipsum dolor sit amet.</span></div>
                 </li>
             </ul>
@@ -93,25 +98,6 @@ function AppendUnique(list,element){
     }
     list.push(element);
     return list;
-}
-
-Array.prototype.StableSort = function(cmp) {
-  cmp = !!cmp ? cmp : (a, b) => {
-    if (a < b) return -1;
-    if (a > b) return 1;
-    return 0;
-  };
-  let stabilizedThis = this.map((el, index) => [el, index]);
-  let stableCmp = (a, b) => {
-    let order = cmp(a[0], b[0]);
-    if (order != 0) return order;
-    return a[1] - b[1];
-  }
-  stabilizedThis.sort(stableCmp);
-  for (let i=0; i<this.length; i++) {
-    this[i] = stabilizedThis[i][0];
-  }
-  return this;
 }
 
 var app = new Vue({
@@ -226,12 +212,9 @@ function RankData(){
                 });
             })
 
-            // list.StableSort((a,b)=>{return b.Institute < a.Institute})
-            // console.log(list);
-            list = list.StableSort((a,b)=>{return b.Country < a.Country})
-            console.log(list);
-            list.StableSort((a,b)=>{return b.weight > a.weight})
-            console.log(list);
+            list = stable(list,(a,b)=>{return b.Institute < a.Institute})
+            list = stable(list,(a,b)=>{return b.Country < a.Country})
+            list = stable(list,(a,b)=>{return b.weight - a.weight})
             resolve(list);
         }, 1);
     });
