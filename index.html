@@ -62,11 +62,25 @@
             </table>
             
             <ul class="collapsible popout" data-collapsible="accordion" >
-                <li v-for="transfer_entry in transfer_data" v-if="advance">
-                    <div class="collapsible-header">
+                <li v-for="(transfer_entry,index) in transfer_data" v-if="advance">
+                    <div class="collapsible-header" :onclick="`ExpandCollapsible(${index})`">
                         <span style="width:60%;">{{transfer_entry.Institute}}</span> <span style="width:20%">({{transfer_entry.Country}})</span> <span  style="width:20%;float:right;text-align:right">mark:{{transfer_entry.weight}}</span>
                     </div>
-                    <div class="collapsible-body"><span>Lorem ipsum dolor sit amet.</span></div>
+                    <div class="collapsible-body" v-if="transfer_entry.active_shown">
+                        <span>{{transfer_entry.Institute}} {{app.active_index}}</span>
+                        <table class="responsive-table striped">
+                                <thead>
+                                    <tr>
+                                        <th v-for="key in keys">{{key}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="transfer_entry in all_data.filter((d)=>{if(d.Institute==transfer_data[app.active_index].Institute)return true})">
+                                        <td v-for="(detail,key) in transfer_entry">{{detail}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                    </div>
                 </li>
             </ul>
 
@@ -101,6 +115,7 @@ function AppendUnique(list,element){
 var app = new Vue({
     el: '#app',
     data: {
+        all_data:[],
         transfer_data:[],
         filter_picklist:[],
         keys:[],
@@ -109,7 +124,8 @@ var app = new Vue({
         inputing_key:'none',
         display_index:0,
         advance:false,
-        updates:false
+        updates:false,
+        active_index:false
     },
     methods:{
         
@@ -118,6 +134,7 @@ var app = new Vue({
 
 function SwitchMode(){
     app.advance = !app.advance;
+    app.active_index = 0;
     RenderTable();
 }
 
@@ -206,7 +223,8 @@ function RankData(){
                     Institute:k,
                     Institute_id:institutes[k].Institute_id,
                     Country:institutes[k].Country,
-                    weight:institutes[k].weight
+                    weight:institutes[k].weight,
+                    active_shown:false
                 });
             })
 
@@ -225,14 +243,24 @@ async function RenderTable(){
     }
     else{
         transfer_data_temp = await RankData();
+        if(app.active_index<transfer_data_temp.length){
+            transfer_data_temp[app.active_index].active_shown = true;
+        }
     }
     app.display_index=0;
     app.transfer_data = transfer_data_temp.slice(0,Math.min(app.display_index+10,transfer_data_temp.length))
     app.display_index=10;
 }
 
+function ExpandCollapsible(index){
+    app.active_index = index;
+    app.transfer_data[index].active_shown = true;
+    transfer_data_temp[index].active_shown = true;
+}
+
 async function UpdateDataTemp(){
     transfer_data_temp = await FilterData();
+    app.all_data = transfer_data_temp;
 }
 
 $.ajax({
