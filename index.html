@@ -201,12 +201,13 @@ function RankData(){
                                     institutes[entry.Institute]={
                                         Institute_id:entry.Institute_id,
                                         Country:entry.Country,
-                                        weight:filter.weight,
-                                        matched:[entry[key]]};
+                                        weight:Number(filter.weight),
+                                        matched:[entry[key]]
+                                    };
                                 }
                                 else{
                                     if(institutes[entry.Institute].matched.indexOf(entry[key])===-1){
-                                        institutes[entry.Institute].weight+=filter.weight;
+                                        institutes[entry.Institute].weight+=Number(filter.weight);
                                         institutes[entry.Institute].matched.push(entry[key])
                                     }
                                     
